@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path"
 	"strconv"
 	"strings"
 )
@@ -24,13 +25,14 @@ func AbridgedFileName(fileName string) string {
 	const maxFileNameLen = 72
 	const numEOFCharsToShow = 8
 
-	switch len(fileName) < maxFileNameLen {
+	switch len(fileName) < maxFileNameLen-numEOFCharsToShow {
 	case true:
 		return fileName
 	default:
-		fileParts := strings.SplitAfter(fileName, ".")
-		fileName = fileParts[0]
-		fileExtension := fileParts[1]
-		return fileName[:maxFileNameLen-numEOFCharsToShow] + "..." + fileName[len(fileName)-numEOFCharsToShow:] + fileExtension
+		fileExt := path.Ext(fileName)
+		fileParts := strings.SplitAfter(fileName, fileExt)
+		fileName := fileParts[0]
+
+		return fileName[:maxFileNameLen-numEOFCharsToShow] + "..." + fileName[len(fileName)-numEOFCharsToShow:]
 	}
 }
