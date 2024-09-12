@@ -3,13 +3,15 @@ package state
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 
 	"github.com/BillysBigFileServer/bfsp-go"
 )
 
 type AppState struct {
-	Files  map[string]*bfsp.FileMetadata
-	RwLock sync.RWMutex
+	Files       map[string]*bfsp.FileMetadata
+	RwLock      sync.RWMutex
+	Initialized atomic.Bool
 }
 
 type appStateContextKeyType struct{}
