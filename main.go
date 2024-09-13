@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/BillysBigFileServer/app/pages"
 	"github.com/BillysBigFileServer/bfsp-go"
+	"github.com/BillysBigFileServer/bfsp-go/config"
 	"github.com/google/uuid"
 )
 
@@ -23,13 +24,34 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("BBFS")
 
-	masterKey, err := bfsp.CreateMasterEncKey("johnbon")
+	configFile, err := config.OpenDefaultConfigFile()
+	defer configFile.Close()
+	if err != nil {
+		panic(err)
+
+	}
+	config, err := config.ReadConfig(configFile)
 	if err != nil {
 		panic(err)
 	}
-	ctx = bfsp.ContextWithMasterKey(ctx, masterKey)
 
-	w.SetContent(StartPage(ctx, w))
+	if config.EncryptionKey == "" && config.Token == "" {
+		w.SetContent(StartPage(ctx, w))
+	} else {
+		client, err := bfsp.NewHTTPFileServerClient(config.Token, "localhost:9998", false)
+		if err != nil {
+			panic(err)
+		}
+		masterKey, err := config.EncryptionKeyBytes()
+		if err != nil {
+			panic(err)
+		}
+		ctx = bfsp.ContextWithMasterKey(ctx, masterKey)
+		ctx = bfsp.ContextWithClient(ctx, client)
+
+		w.SetContent(pages.FilesPage(ctx, w))
+	}
+
 	w.ShowAndRun()
 }
 
@@ -75,14 +97,14 @@ func StartPage(ctx context.Context, w fyne.Window) fyne.CanvasObject {
 
 	signupButton := widget.NewButton("Signup", func() {
 		tempPubKey := tempPrivKey.Encode()
-		signupURL, _ := url.Parse("http://bbfs.io/signup?dl_token=" + dlToken.String() + "#" + tempPubKey)
+		signupURL, _ := url.Parse("http://localhost:4000/signup?dl_token=" + dlToken.String() + "#" + tempPubKey)
 		fyne.CurrentApp().OpenURL(signupURL)
 		w.SetContent(pages.AuthPage(ctx, w, signupURL, dlToken.String(), tempPrivKey.key))
 	})
 
 	loginButton := widget.NewButton("Login", func() {
 		tempPubKey := tempPrivKey.Encode()
-		loginURL, _ := url.Parse("https://bbfs.io/auth?dl_token=" + dlToken.String() + "#" + tempPubKey)
+		loginURL, _ := url.Parse("http://localhost:4000/auth?dl_token=" + dlToken.String() + "#" + tempPubKey)
 		fyne.CurrentApp().OpenURL(loginURL)
 		w.SetContent(pages.AuthPage(ctx, w, loginURL, dlToken.String(), tempPrivKey.key))
 	})

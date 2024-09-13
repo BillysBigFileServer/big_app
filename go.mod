@@ -4,13 +4,14 @@ go 1.22.6
 
 require (
 	fyne.io/fyne/v2 v2.5.1
-	github.com/BillysBigFileServer/bfsp-go v0.0.0-20240912012608-a171b44d86f2
+	github.com/BillysBigFileServer/bfsp-go v0.0.0-20240913001512-460456bbfd45
 	github.com/google/uuid v1.6.0
 )
 
 require (
 	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/adrg/xdg v0.5.0 // indirect
 	github.com/alecthomas/participle/v2 v2.0.0 // indirect
 	github.com/biscuit-auth/biscuit-go/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -34,7 +35,7 @@ require (
 	github.com/rymdport/portal v0.2.6 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/image v0.18.0 // indirect
@@ -46,5 +47,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.3.0 // indirect
 )
-
-replace github.com/BillysBigFileServer/bfsp-go => ../bfsp-go
