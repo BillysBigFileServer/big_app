@@ -4,7 +4,7 @@ go 1.22.6
 
 require (
 	fyne.io/fyne/v2 v2.5.1
-	github.com/BillysBigFileServer/bfsp-go v0.0.0-20240913174720-47582d14b44e
+	github.com/BillysBigFileServer/bfsp-go v0.0.0-20240913183131-54f392e3009f
 	github.com/google/uuid v1.6.0
 )
 
