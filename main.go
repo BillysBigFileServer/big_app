@@ -49,7 +49,7 @@ func main() {
 		ctx = bfsp.ContextWithMasterKey(ctx, masterKey)
 		ctx = bfsp.ContextWithClient(ctx, client)
 
-		w.SetContent(pages.FilesPage(ctx, w))
+		w.SetContent(pages.FilesPage(ctx, w, false))
 	}
 
 	w.ShowAndRun()

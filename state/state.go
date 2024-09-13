@@ -15,24 +15,28 @@ type AppState struct {
 	Initialized atomic.Bool
 }
 
+func (state *AppState) UpdateAppState(client bfsp.FileServerClient, masterKey bfsp.MasterKey) {
+	fileMetas, err := bfsp.ListFileMetadata(client, []string{}, masterKey)
+	if err != nil {
+		panic(err)
+	}
+
+	state.Initialized.Store(true)
+	state.RwLock.Lock()
+	state.Files = fileMetas
+	state.RwLock.Unlock()
+}
+
 func InitAppState(ctx context.Context) context.Context {
-	appState := AppState{}
+	appState := &AppState{}
 	go func() {
 		client := bfsp.ClientFromContext(ctx)
 		masterKey := bfsp.MasterKeyFromContext(ctx)
-		fileMetas, err := bfsp.ListFileMetadata(client, []string{}, masterKey)
-		if err != nil {
-			panic(err)
-		}
-
-		appState.Initialized.Store(true)
-		appState.RwLock.Lock()
-		appState.Files = fileMetas
-		appState.RwLock.Unlock()
+		appState.UpdateAppState(client, masterKey)
 
 		time.Sleep(10 * time.Second)
 	}()
-	return ContextWithAppState(ctx, &appState)
+	return ContextWithAppState(ctx, appState)
 }
 
 type appStateContextKeyType struct{}
@@ -44,5 +48,11 @@ func ContextWithAppState(ctx context.Context, appState *AppState) context.Contex
 }
 
 func FromContext(ctx context.Context) *AppState {
-	return ctx.Value(appStateContextKey).(*AppState)
+	val := ctx.Value(appStateContextKey)
+	switch val {
+	case nil:
+		return nil
+	default:
+		return val.(*AppState)
+	}
 }

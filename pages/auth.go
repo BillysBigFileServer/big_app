@@ -29,6 +29,7 @@ func AuthPage(ctx context.Context, w fyne.Window, url *url.URL, dlToken string, 
 		ctx = bfsp.ContextWithMasterKey(ctx, tokenInfo.MasterKey)
 		ctx = bfsp.ContextWithClient(ctx, client)
 
+		//TODO: use the fyne preference api for easy cross platform preferenes
 		configFile, err := bfspConfig.OpenDefaultConfigFile()
 		defer configFile.Close()
 		if err != nil {
@@ -46,7 +47,7 @@ func AuthPage(ctx context.Context, w fyne.Window, url *url.URL, dlToken string, 
 			panic(err)
 		}
 
-		w.SetContent(FilesPage(ctx, w))
+		w.SetContent(FilesPage(ctx, w, false))
 	}()
 
 	return container.NewVBox(waiting, pleaseOpen)

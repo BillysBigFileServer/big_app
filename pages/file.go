@@ -17,8 +17,7 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 	}
 
 	backButton := widget.NewButtonWithIcon("", backArrow, func() {
-		w.SetContent(FilesPage(ctx, w))
-
+		w.SetContent(FilesPage(ctx, w, false))
 	})
 
 	fileName := widget.NewLabel(fileMeta.FileName)
