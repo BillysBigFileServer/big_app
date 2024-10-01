@@ -21,11 +21,9 @@ func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.Canvas
 		ctx = state.InitAppState(ctx)
 		appState = state.FromContext(ctx)
 	}
-	fileWidgets := getFileWidgets(ctx, appState, w, updateFiles)
-
-	fileWidgetsVBox := container.NewVBox(
-		fileWidgets...,
-	)
+	fileList := getFileList(ctx, appState, w, updateFiles)
+	fileListVBox := container.NewVScroll(fileList)
+	fileListVBox.SetMinSize(fyne.NewSize(0, 700))
 
 	uploadButton := widget.NewButton("Upload", func() {
 		fileDialog := dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
@@ -47,12 +45,10 @@ func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.Canvas
 		fileDialog.Show()
 	})
 
-	fileWidgetsVScroll := container.NewVScroll(fileWidgetsVBox)
-	fileWidgetsVScroll.SetMinSize(fyne.NewSize(0, 600))
-	return container.NewVBox(fileWidgetsVScroll, uploadButton)
+	return container.NewVBox(fileListVBox, uploadButton)
 }
 
-func getFileWidgets(ctx context.Context, appState *state.AppState, w fyne.Window, update bool) []fyne.CanvasObject {
+func getFileList(ctx context.Context, appState *state.AppState, w fyne.Window, update bool) fyne.CanvasObject {
 	if update {
 		client := bfsp.ClientFromContext(ctx)
 		masterKey := bfsp.MasterKeyFromContext(ctx)
@@ -87,12 +83,22 @@ func getFileWidgets(ctx context.Context, appState *state.AppState, w fyne.Window
 		}
 	})
 
-	fileWidgets := []fyne.CanvasObject{}
-	for _, fileMeta := range fileMetaList {
-		fileWidgets = append(fileWidgets, minimalFileWidget(ctx, fileMeta, w))
-	}
+	list := widget.NewList(func() int {
+		return len(fileMetaList)
+	}, func() fyne.CanvasObject {
+		return widget.NewButton("template", func() {
 
-	return fileWidgets
+		})
+
+	}, func(i widget.ListItemID, o fyne.CanvasObject) {
+		fileMeta := fileMetaList[i]
+		o.(*widget.Button).SetText(fileMeta.FileName)
+		o.(*widget.Button).OnTapped = func() {
+			page := FilePage(ctx, fileMeta, w)
+			w.SetContent(page)
+		}
+	})
+	return list
 
 }
 
