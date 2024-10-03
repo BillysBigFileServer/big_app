@@ -1,3 +1,7 @@
+//go:generate fyne bundle -o bundled.go --pkg pages ../resources/back_arrow.png
+//go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/download.png
+//go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/share.png
+
 package pages
 
 import (
@@ -17,19 +21,9 @@ import (
 )
 
 func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) fyne.CanvasObject {
-	backArrow, err := fyne.LoadResourceFromPath("resources/back_arrow.png")
-	if err != nil {
-		panic(err)
-	}
-
-	downloadIcon, err := fyne.LoadResourceFromPath("resources/download.png")
-	if err != nil {
-		panic(err)
-	}
-	shareIcon, err := fyne.LoadResourceFromPath("resources/share.png")
-	if err != nil {
-		panic(err)
-	}
+	backArrow := resourceBackarrowPng
+	downloadIcon := resourceDownloadPng
+	shareIcon := resourceSharePng
 
 	backButton := widget.NewButtonWithIcon("", backArrow, func() {
 		w.SetContent(FilesPage(ctx, w, false))
