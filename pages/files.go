@@ -22,8 +22,6 @@ func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.Canvas
 		appState = state.FromContext(ctx)
 	}
 	fileList := getFileList(ctx, appState, w, updateFiles)
-	fileListVBox := container.NewVScroll(fileList)
-	fileListVBox.SetMinSize(fyne.NewSize(0, 700))
 
 	uploadButton := widget.NewButton("Upload", func() {
 		fileDialog := dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
@@ -45,7 +43,7 @@ func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.Canvas
 		fileDialog.Show()
 	})
 
-	return container.NewVBox(fileListVBox, uploadButton)
+	return container.NewBorder(nil, uploadButton, nil, nil, fileList)
 }
 
 func getFileList(ctx context.Context, appState *state.AppState, w fyne.Window, update bool) fyne.CanvasObject {
