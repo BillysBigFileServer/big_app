@@ -42,8 +42,14 @@ func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.Canvas
 		}, w)
 		fileDialog.Show()
 	})
+	usageButton := widget.NewButton("Usage", func() {
+		w.SetContent(UsagePage(ctx, w))
 
-	return container.NewBorder(nil, uploadButton, nil, nil, fileList)
+	})
+
+	buttons := container.NewGridWithColumns(2, uploadButton, usageButton)
+
+	return container.NewBorder(nil, buttons, nil, nil, fileList)
 }
 
 func getFileList(ctx context.Context, appState *state.AppState, w fyne.Window, update bool) fyne.CanvasObject {
