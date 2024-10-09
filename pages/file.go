@@ -26,7 +26,7 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 	shareIcon := resourceSharePng
 
 	backButton := widget.NewButtonWithIcon("", backArrow, func() {
-		w.SetContent(FilesPage(ctx, w, false))
+		w.SetContent(FilesPage(ctx, w, fileMeta.Directory, false))
 	})
 	downloadButton := widget.NewButtonWithIcon("", downloadIcon, func() {
 		fileSaver := dialog.NewFileSave(func(uri fyne.URIWriteCloser, err error) {

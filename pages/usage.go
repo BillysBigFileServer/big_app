@@ -32,7 +32,7 @@ func UsagePage(ctx context.Context, w fyne.Window) fyne.CanvasObject {
 
 	backArrow := resourceBackarrowPng
 	backButton := widget.NewButtonWithIcon("", backArrow, func() {
-		w.SetContent(FilesPage(ctx, w, false))
+		w.SetContent(FilesPage(ctx, w, []string{}, false))
 	})
 	p, err := charts.PieRender(
 		valuesf64,

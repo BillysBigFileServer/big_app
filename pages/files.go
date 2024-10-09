@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sort"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -15,13 +17,13 @@ import (
 	"github.com/BillysBigFileServer/bfsp-go"
 )
 
-func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.CanvasObject {
+func FilesPage(ctx context.Context, w fyne.Window, directory []string, updateFiles bool) fyne.CanvasObject {
 	appState := state.FromContext(ctx)
 	if appState == nil {
 		ctx = state.InitAppState(ctx)
 		appState = state.FromContext(ctx)
 	}
-	fileList := getFileList(ctx, appState, w, updateFiles)
+	fileList := getFileList(ctx, appState, w, directory, updateFiles)
 
 	uploadButton := widget.NewButton("Upload", func() {
 		fileDialog := dialog.NewFileOpen(func(uri fyne.URIReadCloser, err error) {
@@ -37,33 +39,54 @@ func FilesPage(ctx context.Context, w fyne.Window, updateFiles bool) fyne.Canvas
 				panic(err)
 			}
 
-			w.SetContent(FilesPage(ctx, w, true))
+				w.SetContent(FilesPage(ctx, w, directory, true))
 
 		}, w)
 		fileDialog.Show()
 	})
 	usageButton := widget.NewButton("Usage", func() {
 		w.SetContent(UsagePage(ctx, w))
-
 	})
 
 	buttons := container.NewGridWithColumns(2, uploadButton, usageButton)
 
-	return container.NewBorder(nil, buttons, nil, nil, fileList)
+	var top *fyne.Container
+
+	switch len(directory) {
+	case 0:
+		top = container.NewHBox()
+	default:
+		backIcon := resourceBackarrowPng
+		backButton := widget.NewButtonWithIcon("", backIcon, func() {
+			page := FilesPage(ctx, w, directory[:len(directory)-1], false)
+			w.SetContent(page)
+		})
+		top = container.NewHBox(backButton)
+	}
+
+	return container.NewBorder(top, buttons, nil, nil, fileList)
 }
 
-func getFileList(ctx context.Context, appState *state.AppState, w fyne.Window, update bool) fyne.CanvasObject {
+func getFileList(ctx context.Context, appState *state.AppState, w fyne.Window, directory []string, update bool) fyne.CanvasObject {
 	if update {
 		client := bfsp.ClientFromContext(ctx)
 		masterKey := bfsp.MasterKeyFromContext(ctx)
 		appState.UpdateAppState(client, masterKey)
 	}
 
+	directories := map[string]bool{}
 	fileMetaList := []*bfsp.FileMetadata{}
+
 	for {
 		appState.RwLock.RLock()
 		for _, meta := range appState.Files {
-			fileMetaList = append(fileMetaList, meta)
+			if isDirEqual(directory, meta.Directory) {
+				fileMetaList = append(fileMetaList, meta)
+			}
+
+			if isSubdirectory(directory, meta.Directory) {
+				directories[sliceToDirectory(meta.Directory)] = true
+			}
 		}
 		appState.RwLock.RUnlock()
 
@@ -86,24 +109,72 @@ func getFileList(ctx context.Context, appState *state.AppState, w fyne.Window, u
 			return 1
 		}
 	})
+	directoriesList := []string{}
+	for dir, _ := range directories {
+		directoriesList = append(directoriesList, dir)
+	}
+	sort.Strings(directoriesList)
 
-	list := widget.NewList(func() int {
-		return len(fileMetaList)
-	}, func() fyne.CanvasObject {
-		return widget.NewButton("template", func() {
+	buttons := []*widget.Button{}
 
+	for _, dir := range directoriesList {
+		button := widget.NewButton(dir, func() {
+			dir := directoryToSlice(dir)
+			page := FilesPage(ctx, w, dir, false)
+			w.SetContent(page)
 		})
 
-	}, func(i widget.ListItemID, o fyne.CanvasObject) {
-		fileMeta := fileMetaList[i]
-		o.(*widget.Button).SetText(fileMeta.FileName)
-		o.(*widget.Button).OnTapped = func() {
-			page := FilePage(ctx, fileMeta, w)
-			w.SetContent(page)
-		}
-	})
-	return list
+		buttons = append(buttons, button)
 
+	}
+
+	for _, meta := range fileMetaList {
+		button := widget.NewButton(meta.FileName, func() {
+			page := FilePage(ctx, meta, w)
+			w.SetContent(page)
+		})
+		buttons = append(buttons, button)
+	}
+
+	list := widget.NewList(func() int {
+		return len(buttons)
+	}, func() fyne.CanvasObject {
+		return widget.NewButton("template", func() {})
+	}, func(i widget.ListItemID, o fyne.CanvasObject) {
+		o.(*widget.Button).SetText(buttons[i].Text)
+		o.(*widget.Button).OnTapped = buttons[i].OnTapped
+	})
+
+	return list
+}
+
+func isDirEqual(dir1 []string, dir2 []string) bool {
+	if len(dir1) != len(dir2) {
+		return false
+	}
+
+	for idx := range len(dir1) {
+		if dir1[idx] != dir2[idx] {
+			return false
+		}
+	}
+
+	return true
+}
+
+// This isn't too hard. We check that our current directory (dir1) is < dir2's length by 1, then we just check that each item in dir1 matches each item in dir2 (to make sure it's actually a subdirectory)
+func isSubdirectory(dir1 []string, dir2 []string) bool {
+	if len(dir1)+1 != len(dir2) {
+		return false
+	}
+
+	for idx := range dir1 {
+		if dir1[idx] != dir2[idx] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func minimalFileWidget(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) fyne.CanvasObject {
@@ -117,4 +188,21 @@ func minimalFileWidget(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.
 	})
 
 	return container.NewHBox(checkbox, fileName)
+}
+
+func sliceToDirectory(dir []string) string {
+	return "/" + strings.Join(dir, "/")
+}
+func directoryToSlice(dir string) []string {
+	if dir == "/" {
+		return []string{}
+	}
+	dir = strings.TrimPrefix(dir, "/")
+	slice := strings.Split(dir, "/")
+	for idx := range slice {
+		if slice[idx] == " " {
+			slice[idx] = ""
+		}
+	}
+	return slice
 }

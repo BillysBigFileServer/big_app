@@ -35,7 +35,7 @@ func AuthPage(ctx context.Context, w fyne.Window, url *url.URL, dlToken string, 
 		preferences.SetString("master_key", base64.StdEncoding.EncodeToString(tokenInfo.MasterKey))
 		preferences.SetString("token", string(tokenInfo.Token))
 
-		w.SetContent(FilesPage(ctx, w, false))
+		w.SetContent(FilesPage(ctx, w, []string{}, false))
 	}()
 
 	return container.NewVBox(waiting, pleaseOpen)
