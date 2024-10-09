@@ -1,6 +1,7 @@
 //go:generate fyne bundle -o bundled.go --pkg pages ../resources/back_arrow.png
 //go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/download.png
 //go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/share.png
+//go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/delete.png
 
 package pages
 
@@ -24,6 +25,7 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 	backArrow := resourceBackarrowPng
 	downloadIcon := resourceDownloadPng
 	shareIcon := resourceSharePng
+	deleteIcon := resourceDeletePng
 
 	backButton := widget.NewButtonWithIcon("", backArrow, func() {
 		w.SetContent(FilesPage(ctx, w, fileMeta.Directory, false))
@@ -68,9 +70,32 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 			copiedToClipboardText.SetText("")
 		}()
 	})
+	deleteButton := widget.NewButtonWithIcon("", deleteIcon, func() {
+		cli := bfsp.ClientFromContext(ctx)
+
+		if err := bfsp.DeleteFileMetadata(cli, fileMeta.Id); err != nil {
+			err = fmt.Errorf("error deleting file metadata: %w", err)
+			panic(err)
+		}
+
+		var chunks []string
+		for _, chunkID := range fileMeta.Chunks {
+			chunks = append(chunks, chunkID)
+		}
+
+		if err := bfsp.DeleteChunks(cli, chunks); err != nil {
+			err = fmt.Errorf("error deleting file chunks: %w", err)
+			panic(err)
+		}
+
+		// we should go back to whatever directory we were looking at
+		w.SetContent(FilesPage(ctx, w, fileMeta.Directory, true))
+	})
 
 	buttonSeparator := widget.NewSeparator()
-	buttonBox := container.NewHBox(backButton, buttonSeparator, downloadButton, buttonSeparator, shareButton, copiedToClipboardText)
+	leftButtonBox := container.NewHBox(backButton, buttonSeparator, downloadButton, buttonSeparator, shareButton, copiedToClipboardText)
+	rightButtonBox := container.NewHBox(deleteButton)
+	buttonBox := container.NewBorder(nil, nil, leftButtonBox, rightButtonBox)
 
 	fileName := widget.NewLabel(fileMeta.FileName)
 	fileName.Wrapping = fyne.TextWrapWord
