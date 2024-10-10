@@ -2,6 +2,8 @@
 //go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/download.png
 //go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/share.png
 //go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/delete.png
+//go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/file_move_folder.png
+//go:generate fyne bundle -o bundled.go --pkg pages -append ../resources/cancel.png
 
 package pages
 
@@ -17,6 +19,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/BillysBigFileServer/app/helper"
 	"github.com/BillysBigFileServer/app/preferences"
+	"github.com/BillysBigFileServer/app/state"
 	"github.com/BillysBigFileServer/bfsp-go"
 	"github.com/BillysBigFileServer/bfsp-go/config"
 )
@@ -26,16 +29,19 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 	downloadIcon := resourceDownloadPng
 	shareIcon := resourceSharePng
 	deleteIcon := resourceDeletePng
+	fileMoveFolderIcon := resourceFilemovefolderPng
 
 	backButton := widget.NewButtonWithIcon("", backArrow, func() {
 		w.SetContent(FilesPage(ctx, w, fileMeta.Directory, false))
 	})
 	downloadButton := widget.NewButtonWithIcon("", downloadIcon, func() {
 		fileSaver := dialog.NewFileSave(func(uri fyne.URIWriteCloser, err error) {
-			err = bfsp.DownloadFile(ctx, fileMeta, uri, "")
-			if err != nil {
-				panic(err)
-			}
+			go func() {
+				err = bfsp.DownloadFile(ctx, fileMeta, uri, "")
+				if err != nil {
+					panic(err)
+				}
+			}()
 		}, w)
 		fileSaver.SetFileName(fileMeta.FileName)
 		fileSaver.Show()
@@ -91,10 +97,14 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 		// we should go back to whatever directory we were looking at
 		w.SetContent(FilesPage(ctx, w, fileMeta.Directory, true))
 	})
+	fileMoveFolderButton := widget.NewButtonWithIcon("", fileMoveFolderIcon, func() {
+		appState := state.FromContext(ctx)
+		w.SetContent(DirectorySelectPage(ctx, appState, w, fileMeta.Directory, fileMeta, false))
+	})
 
 	buttonSeparator := widget.NewSeparator()
 	leftButtonBox := container.NewHBox(backButton, buttonSeparator, downloadButton, buttonSeparator, shareButton, copiedToClipboardText)
-	rightButtonBox := container.NewHBox(deleteButton)
+	rightButtonBox := container.NewHBox(fileMoveFolderButton, deleteButton)
 	buttonBox := container.NewBorder(nil, nil, leftButtonBox, rightButtonBox)
 
 	fileName := widget.NewLabel(fileMeta.FileName)
