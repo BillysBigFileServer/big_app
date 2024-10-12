@@ -1,0 +1,8 @@
+Dockerfile.android
+app.apk
+.direnv/
+.github/
+.secrets
+app.tar.xz
+flake.nix
+flake.lock

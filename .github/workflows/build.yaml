@@ -1,0 +1,39 @@
+name: Build Android Docker Image and Upload Artifacts
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Depot CLI
+      uses: depot/setup-action@v1
+
+    - run: depot build --project 0k8767spqx --load --tag build -f Dockerfile .
+      env:
+        DEPOT_TOKEN: ${{ secrets.DEPOT_TOKEN }}
+
+    - name: Create artifact directory
+      run: mkdir -p artifacts
+
+    - name: Copy artifacts from container
+      run: docker export $(docker create build:latest --name extract) | tar -xf - out
+
+    - name: Upload android build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: out/app.apk
+
+    - name: Upload linux build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux
+        path: out/app_linux.tar.xz
