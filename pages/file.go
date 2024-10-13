@@ -66,7 +66,7 @@ func FilePage(ctx context.Context, fileMeta *bfsp.FileMetadata, w fyne.Window) f
 		}
 
 		baseURL := config.BigCentralBaseURL()
-		url := fmt.Sprintf("%s/files/view_file/#z:%s", baseURL, viewInfoStr)
+		url := fmt.Sprintf("%s/files/view_file#z:%s", baseURL, viewInfoStr)
 
 		w.Clipboard().SetContent(url)
 
