@@ -1,4 +1,4 @@
-name: Build Android Docker Image and Upload Artifacts
+name: Build and upload artifacts
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
 
     steps:
     - name: Checkout repository
